@@ -12,6 +12,7 @@
 
     var moment = require('assets/js/moment-bd.js');
     moment.locale('tr');
+    var todayText = "Bugün";
 
     var self = this;
     var selectedDate = self.SelectedDate.inner();
@@ -171,6 +172,7 @@
     setCurrentDate(initialCurrentMDate.toDate());
 
     module.exports = {
+      todayText,
       shortDayNames: moment.weekdaysShort(true),
       currentYearMonthLabel,
       currentViewDates,
@@ -276,7 +278,7 @@
     </Each>    
   </Panel>
   <Panel Dock="Bottom" Alignment="Center" Margin="0,5,0,5">
-    <SemiBoldText ux:Name="todayText" Alignment="Center" Value="Bugün" FontSize="14" TextColor="#FFF"/>
+    <SemiBoldText ux:Name="todayText" Alignment="Center" Value="{todayText}" FontSize="14" TextColor="#FFF"/>
     <Rectangle CornerRadius="20" Fill="{Resource Red02Color}" Width="80" Height="25"/>
     <Clicked>
       <Callback Handler="{selectToday}" />
