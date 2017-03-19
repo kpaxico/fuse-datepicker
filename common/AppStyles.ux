@@ -1,0 +1,37 @@
+<Panel ux:Class="AppStyles">
+
+  <Font File="../assets/fonts/OpenSans/OpenSans-Regular.ttf" ux:Global="FontRegular" />
+  <Font File="../assets/fonts/OpenSans/OpenSans-Bold.ttf" ux:Global="FontBold" />
+  <Font File="../assets/fonts/OpenSans/OpenSans-Semibold.ttf" ux:Global="FontSemibold" />
+  <Font File="../assets/fonts/OpenSans/OpenSans-Light.ttf" ux:Global="FontLight" />
+
+  <Text ux:Class="RegularText" Font="AppStyles.FontRegular" />
+  <Text ux:Class="SemiBoldText" Font="AppStyles.FontSemibold" />
+  <Text ux:Class="BoldText" Font="AppStyles.FontBold" />
+
+  <SolidColor Color="#EA696E" ux:Global="Red01Color" />
+  <SolidColor Color="#BA5155" ux:Global="Red02Color" />
+
+  <FileImageSource File="../assets/icons/arrow_right.png" ux:Global="rightArrowImage" />
+  <FileImageSource File="../assets/icons/arrow_left.png" ux:Global="leftArrowImage" />
+
+  <FileImageSource File="../assets/icons/ic_arrow_back_white_2x.png" ux:Global="backArrowImage" />
+  <FileImageSource File="../assets/icons/ic_arrow_forward_white_2x.png" ux:Global="forwardArrowImage" />
+  <FileImageSource File="../assets/icons/ic_today_white_2x.png" ux:Global="todayImage" />
+
+  <Rectangle ux:Class="HLineRectangle" Fill="#DDD" Height="1" />
+
+
+  <Page ux:Class="BasePage" ux:Name="self" HitTestMode="LocalBoundsAndChildren" HeaderColor="0,0,0,0.3" HeaderTextColor="#fff" >
+    <float4 ux:Property="HeaderColor" />
+    <float4 ux:Property="HeaderTextColor" />
+    <float4 ux:Property="PageColor" />
+
+    <DockLayout />
+    <StackPanel Dock="Top">
+      <Panel Color="{Property self.HeaderColor}" Height="45">
+        <Text Value="{Property self.Title}" FontSize="22" Alignment="Center" TextColor="{Property self.HeaderTextColor}"/>
+      </Panel>
+    </StackPanel>
+  </Page>
+</Panel>

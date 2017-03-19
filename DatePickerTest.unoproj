@@ -1,0 +1,14 @@
+{
+  "RootNamespace":"",
+  "Packages": [
+    "Fuse",
+    "FuseJS"
+  ],
+  "Includes": [
+    "*",
+    "assets/js/*.js:Bundle",
+    "backend/*.js:Bundle",
+    "pages/SalesOrder/*.js:Bundle",
+    "pages/Activity/*.js:Bundle"
+  ]
+}

@@ -1,0 +1,289 @@
+<DockPanel ux:Class="CalendarPanel" Width="280" Height="300" Background="#FFF" CanOnlySelectBusinessDay="false">
+  <object ux:Property="SelectedDate" />
+  <object ux:Property="SelectableMaxDate" />
+  <bool ux:Property="CanOnlySelectBusinessDay" />
+
+  <UserEvent ux:Name="CalendarDateSelectedEvent" />
+  <UserEvent ux:Name="CalendarSelectedDayTappedEvent" />
+
+  <JavaScript>
+    var Observable = require("FuseJS/Observable");
+    var Utils = require('backend/JsUtils.js');
+
+    var moment = require('assets/js/moment-bd.js');
+    moment.locale('tr');
+
+    var self = this;
+    var selectedDate = self.SelectedDate.inner();
+    var selectableMaxDate = self.SelectableMaxDate.inner();
+
+    var currentDate = moment(null);
+    var currentYearMonthLabel = Observable();
+    var currentViewDates = [];
+    var isSelectedDayInCurrentPeriod = Observable(false);
+
+    var selectedDay = Observable([]);
+
+    var initDaysView = function() {
+      if (currentViewDates.length > 0)
+        return;
+
+      function getDayItem(state, dayNo, isEnabled, isSelectable, isInView) {
+        return {
+          state: state,
+          dayNo: dayNo,
+          isEnabled: isEnabled,
+          isSelectable: Observable(isSelectable),
+          isInView: Observable(isInView)
+        }
+      }
+
+      for (var i = 23; i <= 31; i++)
+        currentViewDates.push(getDayItem(-1, i, false, false, false)); 
+
+      for (var i = 1; i <= 31; i++)
+        currentViewDates.push(getDayItem(0, i, true, true, true)); 
+
+      for (var i = 1; i <= 6; i++)
+        currentViewDates.push(getDayItem(1, i, false, false, false));
+    }
+
+    var refreshDaysView = function() {
+      if (!currentDate.isValid())
+        return;
+
+      var firstDate = moment([currentDate.year(), currentDate.month()]);
+      var lastDate = moment(currentDate).endOf('month');
+
+      // Previous Month Days Handling
+      var prevMonthDayCount = (firstDate.day()  === 0 ? 7 : firstDate.day()) - 1;
+      var prevMonthDays = [];
+      while (prevMonthDayCount > 0) {
+        prevMonthDays.push(firstDate.clone().add((-1) * prevMonthDayCount, 'd').date());
+        --prevMonthDayCount;
+      }
+      currentViewDates.filter(function(item) {
+        return item.state === -1;
+      }).forEach(function(element) {
+        element.isInView.value = prevMonthDays.includes(element.dayNo);
+      });
+
+      // Current Month Last Days Handling
+      var currentMonthLastDays = currentViewDates.filter(function(item) {
+        return item.state === 0 && item.dayNo >= 28;
+      }).forEach(function(element) {
+        element.isInView.value = element.dayNo <= lastDate.date();
+      });
+
+      // Next Month Days Handling
+      var nextMonthDayCount = 7 - (lastDate.day() === 0 ? 7 : lastDate.day());
+      var nextMonthDays = [];
+      for (var i = 0; i < nextMonthDayCount; i++)
+        nextMonthDays.push(i + 1);
+
+      currentViewDates.filter(function(item) {
+        return item.state === 1;
+      }).forEach(function(element) {
+        element.isInView.value = nextMonthDays.includes(element.dayNo);
+      });
+
+      // selectableDate marking
+      currentViewDates.filter(function(item) {
+        return item.state === 0;
+      }).forEach(function(element) {
+        var elementMoment = moment([currentDate.year(), currentDate.month(), element.dayNo]);
+        var selectable = true;
+        
+        selectable = (!Utils.isDate(selectableMaxDate.value) || elementMoment.isBefore(selectableMaxDate.value)) && 
+          (!self.CanOnlySelectBusinessDay.value || elementMoment.isBusinessDay());
+
+        element.isSelectable.value = selectable;
+      });
+    }
+
+    var setCurrentDate = function(dateVal) {        
+      if (dateVal && dateVal instanceof Date && !moment(dateVal).isSame(currentDate, 'day')) {
+        currentDate = moment(dateVal);
+        currentYearMonthLabel.value = currentDate.format('MMMM YYYY');
+        isSelectedDayInCurrentPeriod.value = moment(selectedDate.value).isSame(currentDate, 'month');
+        refreshDaysView();
+      } 
+    }
+
+    selectableMaxDate.onValueChanged(module, function(dateVal) {
+      refreshDaysView();
+    })
+
+    selectedDate.onValueChanged(module, function(dateVal) {
+      if (!Utils.isDate(dateVal))
+        return;
+
+      setCurrentDate(new Date(dateVal.getFullYear(), dateVal.getMonth(), 1));
+      isSelectedDayInCurrentPeriod.value = moment(selectedDate.value).isSame(currentDate, 'month');
+
+      if (selectedDay.value != dateVal.getDate())
+        selectedDay.value = dateVal.getDate();
+    });
+
+    selectedDay.onValueChanged(module, function() {
+      if (Utils.isEmpty(selectedDay.value) || selectedDay.value == 0 || !currentDate.isValid()) {
+      } else {
+        var newDate = new Date(currentDate.year(), currentDate.month(), selectedDay.value);
+        if (!moment(newDate).isSame(selectedDate.value, 'day')) {
+          setSelectedDate(newDate, false);
+        }
+      }
+    })
+
+    var setSelectedDate = function(newDate, silentUpdate) {
+      if (self.SelectedDate.value instanceof Observable)
+        self.SelectedDate.value.value = newDate;
+      
+      CalendarDateSelectedEvent.raise({
+        selectedDay: newDate.getDate(), 
+        selectedMonth: newDate.getMonth(),
+        selectedYear: newDate.getFullYear() 
+      });
+    }
+
+    var goToPrevMonth = function(args) {
+      setCurrentDate(currentDate.clone().add(-1, 'M').toDate());
+    }
+
+    var goToNextMonth = function(args) {
+      setCurrentDate(currentDate.clone().add(1, 'M').toDate());
+    }
+
+    var selectToday = function() {
+      setSelectedDate(new Date(), false);
+    }
+
+    var selectedDayTappedHandler = function(args) {
+      if (moment(selectedDate.value).isSame(currentDate, 'month'))
+        CalendarSelectedDayTappedEvent.raise();
+      else
+        setSelectedDate(new Date(currentDate.year(), currentDate.month(), selectedDay.value), false);
+    }
+
+    initDaysView();
+
+    var initialCurrentMDate = moment().isBusinessDay() === false ? moment().prevBusinessDay() : moment();
+    setCurrentDate(initialCurrentMDate.toDate());
+
+    module.exports = {
+      shortDayNames: moment.weekdaysShort(true),
+      currentYearMonthLabel,
+      currentViewDates,
+
+      goToPrevMonth,
+      goToNextMonth,
+      selectToday,
+      selectedDayTappedHandler,
+
+      selectedDay,
+
+      isSelectedDayInCurrentPeriod
+    }
+  </JavaScript>
+
+  <Panel ux:Class="CalPrevNextDayItem" Alignment="HorizontalCenter">
+    <int ux:Property="DayNo" />
+    <bool ux:Property="IsInView" />
+
+    <WhileFalse Value="{Property this.IsInView}">
+      <Change this.Visibility="Collapsed"/>
+      <Change this.LayoutRole="Inert" />
+    </WhileFalse>
+
+    <RegularText ux:Name="dayText" Value="{Property this.DayNo}" FontSize="13" Alignment="Center" Color="#D3D2CF" />
+  </Panel>
+
+  <Panel ux:Class="CalDayItem" Alignment="HorizontalCenter" HitTestMode="LocalBoundsAndChildren">
+    <int ux:Property="DayNo" />
+    <bool ux:Property="IsInView" />
+    <bool ux:Property="IsSelectable" />
+
+    <WhileFalse Value="{Property this.IsInView}">
+      <Change this.Visibility="Collapsed"/>
+      <Change this.LayoutRole="Inert" />
+    </WhileFalse>
+
+    <Selectable Value="{Property this.DayNo}"/>
+
+    <RegularText ux:Name="dayText" Value="{Property this.DayNo}" FontSize="13" Alignment="Center" />
+    <Circle ux:Name="daySelectedCircle" Fill="{Resource Red01Color}" Width="26" Height="26" Visibility="Collapsed" Alignment="Center" LayoutRole="Inert" Margin="0,0,0,1" />
+    <Rectangle ux:Name="dayUnselectableRect" Fill="#CACACA" Width="25" Height="25" Visibility="Collapsed" Alignment="Center" LayoutRole="Inert"/>
+
+    <WhileTrue Value="{isSelectedDayInCurrentPeriod}">
+      <WhileSelected>
+        <Change dayText.Color="#FFF"/>
+        <Change dayText.Font="AppStyles.FontBold"/>
+        <Change daySelectedCircle.Visibility="Visible"/>
+      </WhileSelected>
+    </WhileTrue>
+    
+    <WhileFalse Value="{Property this.IsSelectable}">
+      <Change dayText.Color="#FFF"/>
+      <Change dayUnselectableRect.Visibility="Visible"/>
+    </WhileFalse>
+
+    <WhileTrue Value="{Property this.IsSelectable}">
+      <WhileSelected>
+        <Tapped Handler="{selectedDayTappedHandler}"/>
+      </WhileSelected>
+      <WhileSelected Invert="True">
+        <Tapped>
+          <ToggleSelection />
+        </Tapped>
+      </WhileSelected>
+    </WhileTrue>
+  </Panel>
+
+  <Grid Dock="Top" ux:Name="calNavigator" Columns="1*,8*,1*" Background="{Resource Red02Color}">
+    <Image Column="0" ux:Name="backImg" Source="leftArrowImage" Alignment="Left" Width="30" Height="30" Color="#FFF"
+      Clicked="{goToPrevMonth}">
+      <WhilePressed>
+        <Scale Target="backImg" Factor="1.1" Duration="0.1" />
+      </WhilePressed>
+    </Image>
+    <BoldText Column="1" Value="{currentYearMonthLabel}" Alignment="Center" Color="#FFF" />
+    <Image Column="2" ux:Name="forwardImg" Source="rightArrowImage" Alignment="Left" Width="30" Height="30" Color="#FFF" Clicked="{goToNextMonth}">
+      <WhilePressed>
+        <Scale Target="forwardImg" Factor="1.2" Duration="0.2" />
+      </WhilePressed>
+    </Image>
+  </Grid>
+  <Grid Dock="Top" ux:Name="calDaysOfWeek" RowCount="1" ColumnCount="7" Margin="0,10,0,5">
+    <Each Items="{shortDayNames}">
+      <SemiBoldText Value="{}" FontSize="13" Alignment="Center" Color="#999999" />
+    </Each>
+  </Grid>
+  <HLineRectangle Dock="Top" />
+  <Panel ux:Name="calDaysOfMonth" Padding="0,10,0,0">
+    <ColumnLayout ColumnCount="7" ColumnSize="40" />
+
+    <Selection Values="{selectedDay}" MaxCount="1" />
+
+    <Each Items="{currentViewDates}">
+      <Match Value="{isEnabled}">
+        <Case Bool="false">
+          <CalPrevNextDayItem DayNo="{dayNo}" IsInView="{isInView}" Padding="6" />
+        </Case>
+        <Case Bool="true">
+          <CalDayItem DayNo="{dayNo}" IsInView="{isInView}" IsSelectable="{isSelectable}" Padding="6" />
+        </Case>
+      </Match>
+    </Each>    
+  </Panel>
+  <Panel Dock="Bottom" Alignment="Center" Margin="0,5,0,5">
+    <SemiBoldText ux:Name="todayText" Alignment="Center" Value="Bugün" FontSize="14" TextColor="#FFF"/>
+    <Rectangle CornerRadius="20" Fill="{Resource Red02Color}" Width="80" Height="25"/>
+    <Clicked>
+      <Callback Handler="{selectToday}" />
+    </Clicked>
+    <WhilePressed>
+      <Scale Target="todayText" Factor="1.1" Duration="0.1" />
+    </WhilePressed>
+  </Panel>
+  <DropShadow Size="10" Distance="3" Spread="0.05" Color="#0008" Angle="90" />
+</DockPanel>
