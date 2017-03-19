@@ -3,7 +3,7 @@
     var Observable = require("FuseJS/Observable");
     var Utils = require('backend/JsUtils.js');
 
-    var selectedDate01 = Observable(new Date(2017,1,11));
+    var selectedDate01 = Observable(new Date(2017,1,21));
     
     var selectedDate02 = Observable(new Date(2017,2,11));
     var selectableMaxDate = Observable(new Date(2017,3,11));
@@ -25,7 +25,7 @@
     <PageControl>
       <BasePage Title="DatePicker">
         <Text Dock="Top" Value="Selected Date: {selectedDate01String}" Margin="5" />
-        <DatePicker Dock="Bottom" SelectedDate="{selectedDate01}" CalendarPos="Top" />
+        <DatePicker Dock="Bottom" SelectedDate="{selectedDate01}" CanOnlySelectBusinessDay="true" CalendarPos="Top" />
       </BasePage>
       <BasePage Title="Calendar">
         <Text Dock="Top" Value="Selected Date: {selectedDate02String}" Margin="5" />

@@ -217,11 +217,13 @@
     <Rectangle ux:Name="dayUnselectableRect" Fill="#CACACA" Width="25" Height="25" Visibility="Collapsed" Alignment="Center" LayoutRole="Inert"/>
 
     <WhileTrue Value="{isSelectedDayInCurrentPeriod}">
-      <WhileSelected>
-        <Change dayText.Color="#FFF"/>
-        <Change dayText.Font="AppStyles.FontBold"/>
-        <Change daySelectedCircle.Visibility="Visible"/>
-      </WhileSelected>
+      <WhileTrue Value="{Property this.IsSelectable}">
+        <WhileSelected>
+          <Change dayText.Color="#FFF"/>
+          <Change dayText.Font="AppStyles.FontBold"/>
+          <Change daySelectedCircle.Visibility="Visible"/>
+        </WhileSelected>
+      </WhileTrue>
     </WhileTrue>
     
     <WhileFalse Value="{Property this.IsSelectable}">
