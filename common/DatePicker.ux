@@ -1,0 +1,118 @@
+<Panel ux:Class="DatePickers">
+
+  <DockPanel ux:Class="DatePicker" Background="{Resource Red01Color}" Padding="0,2" CalendarPos="Bottom">
+    <object ux:Property="SelectedDate" />
+    <string ux:Property="CalendarPos" />
+
+    <UserEvent ux:Name="DatePickerDateSelectedEvent" />
+
+    <JavaScript>
+      var Observable = require("FuseJS/Observable");
+      var Utils = require('backend/JsUtils.js');
+
+      var moment = require('assets/js/moment-bd.js');
+      moment.locale('tr');
+
+      var self = this;
+      var selectedDate = self.SelectedDate.inner();
+      var isCalendarVisible = Observable(false);
+      
+      var calendarDateSelectedHandler = function(args) {
+        var newDate = new Date(args.selectedYear, args.selectedMonth, args.selectedDay);
+
+        hideCalendar();
+
+        if (self.SelectedDate.value instanceof Observable)
+          self.SelectedDate.value.value = newDate;
+
+        DatePickerDateSelectedEvent.raise({
+          selectedDay: newDate.getDate(), 
+          selectedMonth: newDate.getMonth(),
+          selectedYear: newDate.getFullYear() 
+        });
+      };
+      
+      var changeSelectedDate = function(newDate) {
+        if (self.SelectedDate.value instanceof Observable)
+          self.SelectedDate.value.value = newDate;
+
+        DatePickerDateSelectedEvent.raise({
+          selectedDay: newDate.getDate(), 
+          selectedMonth: newDate.getMonth(),
+          selectedYear: newDate.getFullYear() 
+        });
+      }
+
+      var selectPrevDay = function(args) {
+        // debug_log('DatePicker, selectPrevDay');
+        changeSelectedDate(moment(selectedDate.value).clone().add(-1, 'd').toDate());
+      };
+
+      var selectNextDay = function(args) {
+        // debug_log('DatePicker, selectNextDay');
+        changeSelectedDate(moment(selectedDate.value).clone().add(1, 'd').toDate());
+      };
+
+      var showCalendar = function() {
+        isCalendarVisible.value = true;
+      }
+
+      var hideCalendar = function() {
+        isCalendarVisible.value = false;
+      }
+
+      module.exports = {
+        selectedDate,
+
+        selectedDateStr: selectedDate.map(function(x) {
+          return moment(x).format('DD/MM/YYYY');
+        }),
+        calendarDateSelectedHandler,
+        selectPrevDay,
+        selectNextDay,
+
+        isCalendarVisible,
+        showCalendar,
+        hideCalendar
+      };
+    </JavaScript>
+
+    <Rectangle Dock="Left" Fill="{Resource Red01Color}" Width="30" Height="30" Margin="5,0,0,0" >
+      <Image Source="backArrowImage" Width="25" Height="25" />
+      <Clicked>
+        <Callback Handler="{selectPrevDay}" />
+      </Clicked>
+    </Rectangle>
+    <StackPanel Orientation="Horizontal" ContentAlignment="Center" HitTestMode="LocalBounds">
+      <Image Source="todayImage" Width="25" Height="25" Margin="0,0,10,0" />
+      <SemiBoldText Value="{selectedDateStr}" Alignment="Center" FontSize="16" Color="#FFF" />
+
+      <Clicked Handler="{showCalendar}" />
+    </StackPanel>
+    <Rectangle Dock="Right" Fill="{Resource Red01Color}" Width="30" Height="30" Margin="0,0,5,0" >
+      <Image Source="forwardArrowImage" Width="25" Height="25" />
+      <Clicked>
+        <Callback Handler="{selectNextDay}" />
+      </Clicked>
+    </Rectangle>
+
+    <CalendarPanel ux:Name="calendarPanel" SelectedDate="{selectedDate}" LayoutRole="Inert" Layer="Overlay" 
+        Visibility="Collapsed" Alignment="HorizontalCenter">
+      <OnUserEvent EventName="CalendarDateSelectedEvent" Handler="{calendarDateSelectedHandler}"/>
+      <OnUserEvent EventName="CalendarSelectedDayTappedEvent" Handler="{hideCalendar}"/>
+      <Match Value="{Property this.CalendarPos}">
+        <Case String="Bottom">
+          <Translation RelativeTo="ParentSize" Y="4.9" />
+        </Case>
+        <Case String="Top">
+          <Translation RelativeTo="ParentSize" Y="-4.9" />
+        </Case>
+      </Match>
+    </CalendarPanel>
+
+    <WhileTrue Value="{isCalendarVisible}">
+      <Change calendarPanel.Visibility="Visible" />
+    </WhileTrue>
+  </DockPanel>
+
+</Panel>
