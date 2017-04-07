@@ -1,36 +1,68 @@
 <App>
+  <UserEvent ux:Name="EntryIconClickEvent" />
+  <UserEvent ux:Name="EntryClearButtonClickEvent" />
+  <UserEvent ux:Name="DatePickerHideCalendarEvent" />
+
   <JavaScript>
     var Observable = require("FuseJS/Observable");
     var Utils = require('backend/JsUtils.js');
 
-    var selectedDate01 = Observable(new Date(2017,1,21));
+    var selectedDate01 = Observable(new Date(2017,3,10));
+    var selectableMinDate01 = Observable(new Date(2017,3,1));
+    var selectableMaxDate01 = Observable(new Date(2017,3,17));
     
-    var selectedDate02 = Observable(new Date(2017,2,11));
-    var selectableMaxDate = Observable(new Date(2017,3,11));
+    var selectableMaxDate02 = Observable(new Date(2017,3,21));
+    
+    var selectedDate05 = Observable(new Date(2017,1,14));
+    var selectableMaxDate05 = Observable(new Date(2017,1,21));
 
-    module.exports = {  
+    var selectedDate11 = Observable(new Date(2017,2,11));
+    var selectableMaxDate11 = Observable(new Date(2017,3,11));
+
+    module.exports = {
       selectedDate01,
       selectedDate01String: selectedDate01.map(function(x) {
         return Utils.formatDate(x);
       }),
-      selectedDate02,
-      selectedDate02String: selectedDate02.map(function(x) {
+      selectableMinDate01,
+      selectableMaxDate01,
+
+      selectableMaxDate02,
+
+      selectedDate05,
+      selectedDate05String: selectedDate05.map(function(x) {
         return Utils.formatDate(x);
-      }),      
-      selectableMaxDate
+      }),
+      selectableMaxDate05,
+
+      selectedDate11,
+      selectedDate11String: selectedDate11.map(function(x) {
+        return Utils.formatDate(x);
+      }),
+      selectableMaxDate11
     };
   </JavaScript>
 
-	<ClientPanel>
+  <ClientPanel>
     <PageControl>
       <BasePage Title="DatePicker">
-        <Text Dock="Top" Value="Selected Date: {selectedDate01String}" Margin="5" />
-        <DatePicker Dock="Bottom" SelectedDate="{selectedDate01}" CanOnlySelectBusinessDay="true" CalendarPos="Top" />
+        <SelectionEntry Dock="Top" EntryMethod="Calendar" Label="Plan Date" LabelColor="#777" TextColor="#525252" Image="todayImage" ImageColor="{Resource EntryBlueFloat}" SelectedDate="{selectedDate01}" SelectableMinDate="{selectableMinDate01}" SelectableMaxDate="{selectableMaxDate01}" EnableClear="true" IsReadOnly="false" />
+        <Text Dock="Top" Value="Plan Date: {selectedDate01String}" Margin="5" />
+
+        <SelectionEntry Dock="Top" EntryMethod="Calendar" Label="Visit Date" LabelColor="#777" TextColor="#525252" Image="todayImage" ImageColor="{Resource EntryBlueFloat}" EnableClear="true" SelectableMaxDate="{selectableMaxDate02}" CanOnlySelectBusinessDay="true" />
+
+        <DatePicker Dock="Bottom" SelectedDate="{selectedDate05}" SelectableMaxDate="{selectableMaxDate05}" CanOnlySelectBusinessDay="true" CalendarPos="Top" />
+        <Text Dock="Bottom" Value="Selected Date: {selectedDate05String}" Margin="5" />
+        <Panel Background="#FFF">
+          <Clicked>
+            <RaiseUserEvent EventName="DatePickerHideCalendarEvent" />
+          </Clicked>
+        </Panel>
       </BasePage>
       <BasePage Title="Calendar">
-        <Text Dock="Top" Value="Selected Date: {selectedDate02String}" Margin="5" />
-        <CalendarPanel SelectedDate="{selectedDate02}" SelectableMaxDate="{selectableMaxDate}" />
+        <Text Dock="Top" Value="Selected Date: {selectedDate11String}" Margin="5" />
+        <CalendarPanel SelectedDate="{selectedDate11}" SelectableMaxDate="{selectableMaxDate11}" />
       </BasePage>
     </PageControl>
-	</ClientPanel>
+  </ClientPanel>
 </App>

@@ -3,10 +3,13 @@
   <DockPanel ux:Class="DatePicker" Background="{Resource Red01Color}" Padding="0,2" CalendarPos="Bottom">
     <object ux:Property="SelectedDate" />
     <string ux:Property="CalendarPos" />
+    <object ux:Property="SelectableMinDate" />
     <object ux:Property="SelectableMaxDate" />
     <bool ux:Property="CanOnlySelectBusinessDay" />
 
     <UserEvent ux:Name="DatePickerDateSelectedEvent" />
+
+    <OnUserEvent EventName="DatePickerHideCalendarEvent" Handler="{hideCalendar}" />
 
     <JavaScript>
       var Observable = require("FuseJS/Observable");
@@ -17,10 +20,13 @@
 
       var self = this;
       var selectedDate = self.SelectedDate.inner();
+      var selectableMinDate = self.SelectableMinDate.inner();
+      var selectableMaxDate = self.SelectableMaxDate.inner();
       var isCalendarVisible = Observable(false);
       
       var calendarDateSelectedHandler = function(args) {
         var newDate = new Date(args.selectedYear, args.selectedMonth, args.selectedDay);
+        // debug_log('DatePicker, calendarDateSelectedHandler: newDate: {0}, selectedDate: {1}, self.SelectedDate.value.value: {2}'.format(Utils.formatDate(newDate), Utils.formatDate(selectedDate.value), Utils.formatDate(self.SelectedDate.value.value))); 
 
         hideCalendar();
 
@@ -35,6 +41,11 @@
       };
       
       var changeSelectedDate = function(newDate) {
+        // debug_log('DatePicker, changeSelectedDate: newDate: {0}, selectedDate: {1}, self.SelectedDate.value.value: {2}'.format(Utils.formatDate(newDate), Utils.formatDate(selectedDate.value), Utils.formatDate(self.SelectedDate.value.value))); 
+
+        if (!canSelectDate(newDate))
+          return;
+
         if (self.SelectedDate.value instanceof Observable)
           self.SelectedDate.value.value = newDate;
 
@@ -44,6 +55,14 @@
           selectedYear: newDate.getFullYear() 
         });
       }
+
+    var canSelectDate = function(givenDate) {
+      var givenDateMoment = moment(givenDate);
+      
+      return (!Utils.isDate(selectableMinDate.value) || givenDateMoment.isAfter(selectableMinDate.value)) && 
+        (!Utils.isDate(selectableMaxDate.value) || givenDateMoment.isBefore(selectableMaxDate.value)) && 
+        (!self.CanOnlySelectBusinessDay.value || givenDateMoment.isBusinessDay())
+    }      
 
       var selectPrevDay = function(args) {
         // debug_log('DatePicker, selectPrevDay');
@@ -89,7 +108,9 @@
       <Image Source="todayImage" Width="25" Height="25" Margin="0,0,10,0" />
       <SemiBoldText Value="{selectedDateStr}" Alignment="Center" FontSize="16" Color="#FFF" />
 
-      <Clicked Handler="{showCalendar}" />
+      <Clicked Handler="{showCalendar}">
+        <!-- <Toggle Target="showCalendar" /> -->
+      </Clicked>
     </StackPanel>
     <Rectangle Dock="Right" Fill="{Resource Red01Color}" Width="30" Height="30" Margin="0,0,5,0" >
       <Image Source="forwardArrowImage" Width="25" Height="25" />
@@ -98,8 +119,7 @@
       </Clicked>
     </Rectangle>
 
-    <CalendarPanel ux:Name="calendarPanel" SelectedDate="{selectedDate}" SelectableMaxDate="{Property this.SelectableMaxDate}" CanOnlySelectBusinessDay="{Property this.CanOnlySelectBusinessDay}" LayoutRole="Inert" Layer="Overlay" 
-        Visibility="Collapsed" Alignment="HorizontalCenter">
+    <CalendarPanel ux:Name="calendarPanel" SelectedDate="{selectedDate}" SelectableMaxDate="{Property this.SelectableMaxDate}" CanOnlySelectBusinessDay="{Property this.CanOnlySelectBusinessDay}" LayoutRole="Inert" Layer="Overlay" Visibility="Collapsed" Alignment="HorizontalCenter">
       <OnUserEvent EventName="CalendarDateSelectedEvent" Handler="{calendarDateSelectedHandler}"/>
       <OnUserEvent EventName="CalendarSelectedDayTappedEvent" Handler="{hideCalendar}"/>
       <Match Value="{Property this.CalendarPos}">

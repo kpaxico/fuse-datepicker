@@ -11,6 +11,10 @@
 
   <SolidColor Color="#EA696E" ux:Global="Red01Color" />
   <SolidColor Color="#BA5155" ux:Global="Red02Color" />
+  <SolidColor Color="#868686" ux:Global="Grey01Color" />
+  <SolidColor Color="#018BDB" ux:Global="EntryBlueColor" />
+
+  <float4 ux:Value="#018BDB" ux:Global="EntryBlueFloat" />
 
   <FileImageSource File="../assets/icons/arrow_right.png" ux:Global="rightArrowImage" />
   <FileImageSource File="../assets/icons/arrow_left.png" ux:Global="leftArrowImage" />
@@ -34,4 +38,201 @@
       </Panel>
     </StackPanel>
   </Page>
+
+  <StackPanel ux:Class="ActionButton" ContentAlignment="Center" HitTestMode="LocalBoundsAndChildren" Width="90" TextSize="14">
+    <string ux:Property="Text" />
+    <int ux:Property="TextBoldness" />
+    <int ux:Property="TextSize" />
+    <SolidColor ux:Property="FillColor" />
+    <bool ux:Property="ShowImage" />
+    <ImageSource ux:Property="Image" />
+    
+    <Rectangle Layer="Background" Fill="{Property this.FillColor}"/>
+    <RegularText ux:Name="buttonText" FontSize="{Property this.TextSize}" TextColor="#FFF" TextAlignment="Center" TextWrapping="Wrap" Value="{Property this.Text}" Alignment="Center" Margin="5,0,5,0">
+      <WhileFloat Value="{Property this.TextBoldness}" LessThanEqual="1">
+        <Change buttonText.Font="AppStyles.FontSemibold" />
+      </WhileFloat>
+    </RegularText>
+    <WhileTrue Value="{Property this.ShowImage}">
+      <Image Source="{Property this.Image}" Width="24" Height="24" />
+    </WhileTrue>
+    
+    <WhilePressed>
+      <Scale Target="buttonText" Factor="1.2" Duration="0.2" />
+    </WhilePressed>
+  </StackPanel>
+
+  <Panel ux:Class="SelectionEntry" ImageColor="#FFF" LabelColor="#FFF" EntryMethod="Query">
+    <string ux:Property="EntryMethod" />
+    <ImageSource ux:Property="Image" />
+    <float4 ux:Property="ImageColor" />
+    <string ux:Property="Label" />
+    <float4 ux:Property="LabelColor" />
+    <string ux:Property="Text" />
+    <float4 ux:Property="TextColor" />
+    <string ux:Property="ClickParam" />
+    <bool ux:Property="EnableClear" />
+    <bool ux:Property="EnableGrouping" />
+    <bool ux:Property="IsReadOnly" />
+    
+    <object ux:Property="SelectedDate" />
+    <object ux:Property="SelectableMinDate" />
+    <object ux:Property="SelectableMaxDate" />
+    <bool ux:Property="CanOnlySelectBusinessDay" />
+
+    <JavaScript>
+      var Observable = require("FuseJS/Observable");
+      var Utils = require('backend/JsUtils.js');
+
+      var self = this;
+      var isCalendarVisible = Observable(false);
+
+      self.EntryMethod.onValueChanged(module, function(v) {
+        if (self.EntryMethod.value === 'Calendar') {
+          if (!(self.SelectedDate && self.SelectedDate.value instanceof Observable))
+            self.SelectedDate.value = Observable();
+          // debug_log('self.EntryMethod.onValueChanged: ' + v + ', ' + self.SelectedDate.value.value);
+        }
+      });
+
+      self.SelectedDate.onValueChanged(module, function(v) {
+        // debug_log('self.SelectedDate.onValueChanged: ' + v.value);
+        self.Text.value = Utils.isDate(v.value) ? Utils.formatDate(v.value) : '';
+      });
+      
+      var calendarDateSelectedHandler = function(args) {
+        hideCalendar();
+
+        var newDate = new Date(args.selectedYear, args.selectedMonth, args.selectedDay);
+
+        if (self.SelectedDate.value instanceof Observable) {
+          self.SelectedDate.value.value = newDate;
+          self.Text.value = Utils.isDate(newDate) ? Utils.formatDate(newDate) : '';
+        }
+
+        // debug_log('SelectionEntry, calendarDateSelectedHandler: newDate: {0}, self.SelectedDate.value.value: {1}'.format(Utils.formatDate(newDate), self.SelectedDate.value instanceof Observable ? Utils.formatDate(self.SelectedDate.value.value) : ""));
+     };
+      
+      var showHideCalendar = function() {
+        isCalendarVisible.value = !isCalendarVisible.value;
+      }
+
+      var hideCalendar = function() {
+        isCalendarVisible.value = false;
+      }
+
+      var entryIconClicked = function() {
+        if (self.EntryMethod.value === 'Calendar')
+          showHideCalendar();
+      }
+
+      module.exports = {
+        isCalendarVisible,
+        calendarDateSelectedHandler,
+        hideCalendar,
+        entryIconClicked
+      }
+    </JavaScript>
+
+    <Circle ux:Class="DotCircle" Width="20" Height="20" Fill="{Resource EntryBlueColor}">
+      <Scaling Factor="0.2" />
+    </Circle>
+    <Panel ux:Class="DotCirclePanel" Width="40" Alignment="Right" Margin="5,0,0,0" HitTestMode="LocalBoundsAndChildren">
+      <bool ux:Property="IsReadOnly" />
+      
+      <DotCircle ux:Name="dotLeft" Alignment="Left" />
+      <DotCircle ux:Name="dotCenter" Alignment="HorizontalCenter" />
+      <DotCircle ux:Name="dotRight" Alignment="Right" />
+      
+      <WhileTrue Value="{ReadProperty this.IsReadOnly}">
+        <Change dotLeft.Fill="{Resource Grey01Color}" />
+        <Change dotCenter.Fill="{Resource Grey01Color}" />
+        <Change dotRight.Fill="{Resource Grey01Color}" />
+      </WhileTrue>
+    </Panel>
+
+    <DockPanel ux:Name="contentPanel" Padding="0, 10, 0, 10" Background="#FFF">
+      <Image Dock="Left" Source="{Property this.Image}" Width="25" Height="25"
+        Alignment="Center" Color="{Property this.ImageColor}" Margin="2,0,5,0" />
+      <RegularText Dock="Left" Value="{Property this.Label}" TextColor="{Property this.LabelColor}"
+        FontSize="14" Alignment="Center" Margin="0,0,5,0" />
+      <RegularText Value="{Property this.Text}" TextColor="{Property this.TextColor}" Alignment="CenterRight" FontSize="14" />
+      <Panel Dock="Right" ux:Name="entryPanel">
+        <Match Value="{Property this.EntryMethod}">
+          <Case String="Query">
+            <Image Source="rightArrowImage" Width="20" Color="#018bdb" Margin="10,0,10,0" ContentAlignment="Center" />
+          </Case>
+          <Case String="Menu">
+            <DotCirclePanel IsReadOnly="{ReadProperty this.IsReadOnly}" />
+          </Case>
+          <Case String="Calendar">
+            <DotCirclePanel IsReadOnly="{ReadProperty this.IsReadOnly}" />
+          </Case>
+        </Match>
+
+        <WhileFalse Value="{ReadProperty this.IsReadOnly}">
+          <Clicked>
+            <Callback Handler="{entryIconClicked}" />
+            <RaiseUserEvent EventName="EntryIconClickEvent">
+              <UserEventArg Name="ClickParam" StringValue="{Property this.ClickParam}" />
+            </RaiseUserEvent>
+          </Clicked>
+        </WhileFalse>
+      </Panel>
+
+      <WhileString Value="{Property this.EntryMethod}" Equals="Calendar">
+        <OnUserEvent EventName="DatePickerHideCalendarEvent" Handler="{hideCalendar}" />
+
+        <CalendarPanel ux:Name="calendarPanel" SelectedDate="{Property this.SelectedDate}" SelectableMinDate="{Property this.SelectableMinDate}" SelectableMaxDate="{Property this.SelectableMaxDate}" CanOnlySelectBusinessDay="{Property this.CanOnlySelectBusinessDay}" LayoutRole="Inert" Layer="Overlay" 
+            Visibility="Collapsed" Alignment="Right" Margin="0,0,4,0">
+          <OnUserEvent EventName="CalendarDateSelectedEvent" Handler="{calendarDateSelectedHandler}"/>
+          <OnUserEvent EventName="CalendarSelectedDayTappedEvent" Handler="{hideCalendar}"/>
+          <Translation RelativeTo="ParentSize" Y="3.6" />
+        </CalendarPanel>
+
+        <WhileTrue Value="{isCalendarVisible}">
+          <Change calendarPanel.Visibility="Visible" />
+        </WhileTrue>
+      </WhileString>
+
+      <WhileTrue Value="{Property this.EnableClear}">
+        <Clicked>
+          <Set actionSwipe.IsActive="false" />
+        </Clicked>
+        <WhileString Value="{Property this.Text}" Equals="">
+          <Change actionSwipe.IsEnabled="false" />
+        </WhileString>
+      </WhileTrue>
+    </DockPanel>
+
+    <WhileTrue Value="{Property this.EnableClear}">
+      <StackPanel ux:Name="actionPanel" Orientation="Horizontal" Alignment="Right" Background="#FFF" ContentAlignment="Center">
+        <ActionButton Text="Kaldır" FillColor="{Resource Red01Color}">
+          <Clicked>
+            <RaiseUserEvent EventName="EntryClearButtonClickEvent">
+              <UserEventArg Name="ClickParam" StringValue="{Property this.ClickParam}" />
+            </RaiseUserEvent>
+            <ToggleSwipeActive Target="actionSwipe" />
+          </Clicked>
+        </ActionButton>
+      </StackPanel>
+
+      <SwipeGesture ux:Name="actionSwipe" Direction="Left" LengthNode="actionPanel" Type="Active"/>
+      <SwipingAnimation Source="actionSwipe">
+        <Move Target="contentPanel" X="-1" RelativeTo="Size" RelativeNode="actionPanel"/>
+      </SwipingAnimation>
+      <Swiped Source="actionSwipe">
+        <WhileTrue Value="{Property this.EnableGrouping}">
+          <ToggleSelection Mode="AddOnly" />
+        </WhileTrue>
+      </Swiped>
+
+      <WhileTrue Value="{Property this.EnableGrouping}">
+        <Deselected>
+          <Set actionSwipe.IsActive="false" />
+        </Deselected>
+      </WhileTrue>
+    </WhileTrue>
+  </Panel>
+  
 </Panel>
