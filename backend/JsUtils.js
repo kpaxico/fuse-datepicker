@@ -1,5 +1,8 @@
 var moment = require('assets/js/moment-bd.js');
-moment.locale('tr');
+
+function setMomentLocale(langCode) {
+  moment.locale(langCode);
+}
 
 var isEmpty = function(v, allowBlank){
   return ((typeof v) === 'undefined') || v === null || ((Array.isArray(v) && !v.length)) || (!allowBlank ? v === '' : false);
@@ -26,6 +29,8 @@ String.prototype.format = function() {
 };
 
 module.exports = {
+  setMomentLocale,
+  
   isEmpty,
   isDate,
   strToDate,

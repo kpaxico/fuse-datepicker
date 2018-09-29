@@ -7,6 +7,7 @@
   "Includes": [
     "*",
     "assets/js/*.js:Bundle",
-    "backend/*.js:Bundle"
+    "backend/*.js:Bundle",
+    "assets/locales/*.json:Bundle"
   ]
 }

@@ -1,8 +1,14 @@
 var Observable = require('FuseJS/Observable');
+
+var AppLocalization = require('backend/AppLocalization.js');
 var Utils = require('backend/JsUtils.js');
 
 var moment = require('assets/js/moment-bd.js');
-moment.locale('tr');
+
+AppLocalization.currLocaleObj.onValueChanged(module, function(val) {
+  // debug_log('DatePicker, AppLocalization.currLocaleObj.langCode: ' + Utils.objToStr(val.langCode));
+  moment.locale(val.langCode);
+});
 
 var self = this;
 var selectedDate = self.SelectedDate.inner();

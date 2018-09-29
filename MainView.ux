@@ -11,13 +11,13 @@
     var selectableMinDate01 = Observable(new Date(2017,3,1));
     var selectableMaxDate01 = Observable(new Date(2017,3,17));
     
-    var selectableMaxDate02 = Observable(new Date(2017,3,21));
+    var selectableMaxDate02 = Observable(new Date(2018,11,31));
     
     var selectedDate05 = Observable(new Date(2017,1,14));
     var selectableMaxDate05 = Observable(new Date(2017,1,21));
 
-    var selectedDate11 = Observable(new Date(2018,2,11));
-    var selectableMaxDate11 = Observable(new Date(2018,3,11));
+    var selectedDate11 = Observable(new Date(2018,10,01));
+    var selectableMaxDate11 = Observable(new Date(2018,10,11));
 
     module.exports = {
       selectedDate01,

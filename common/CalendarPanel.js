@@ -1,8 +1,14 @@
 var Observable = require('FuseJS/Observable');
+
+var AppLocalization = require('backend/AppLocalization.js');
 var Utils = require('backend/JsUtils.js');
 
 var moment = require('assets/js/moment-bd.js');
-moment.locale('tr');
+
+AppLocalization.currLocaleObj.onValueChanged(module, function(val) {
+  // debug_log('CalendarPanel, AppLocalization.currLocaleObj.langCode: ' + Utils.objToStr(val.langCode));
+  moment.locale(val.langCode);
+});
 
 var self = this;
 var selectedDate = self.SelectedDate.inner();
@@ -46,12 +52,15 @@ var refreshDaysView = function() {
   if (!currentDate.isValid())
     return;
 
-  var firstDate = moment([currentDate.year(), currentDate.month()]);
+  var firstDate = moment([currentDate.year(), currentDate.month(), 1]);
   var lastDate = moment(currentDate).endOf('month');
 
+  debug_log('refreshDaysView, firstDate: {0}, lastDate: {1}'.format(Utils.formatDate(firstDate), Utils.formatDate(lastDate)));
+
   // Previous Month Days Handling
-  var prevMonthDayCount = (firstDate.day()  === 0 ? 7 : firstDate.day()) - 1;
-  // debug_log('firstDate.day: {0}, prevMonthDayCount: {1}'.format(firstDate.day(), prevMonthDayCount));
+  var firstDayNoOfWeek = moment.localeData().firstDayOfWeek(); // en: 0, tr: 1
+  var prevMonthDayCount = (firstDate.day() === 0 ? 7 : firstDate.day()) - firstDayNoOfWeek;
+  // debug_log('firstDayNoOfWeek: {0}, firstDate.day: {1}, prevMonthDayCount: {2}'.format(firstDayNoOfWeek, firstDate.day(), prevMonthDayCount));
   var prevMonthDays = [];
   while (prevMonthDayCount > 0) {
     prevMonthDays.push(firstDate.clone().add((-1) * prevMonthDayCount, 'd').date());
@@ -214,6 +223,8 @@ var initialCurrentMDate = moment().isBusinessDay() === false ? moment().nextBusi
 setCurrentDate(initialCurrentMDate.toDate());
 
 module.exports = {
+  appLoc: AppLocalization.currLocale,
+  
   shortDayNames: moment.weekdaysShort(true),
   currentYearMonthLabel,
   currentViewDates,

@@ -82,7 +82,7 @@
   </Grid>
   <Grid Dock="Top" ux:Name="calDaysOfWeek" RowCount="1" ColumnCount="7" Margin="0,10,0,5">
     <Each Items="{shortDayNames}">
-      <SemiBoldText Value="{}" FontSize="13" Alignment="Center" Color="#999999" />
+      <SemiBoldText Value="{= data () }" FontSize="13" Alignment="Center" Color="#999999" />
     </Each>
   </Grid>
   <HLineRectangle Dock="Top" />
@@ -103,7 +103,7 @@
     </Each>    
   </Panel>
   <Panel Dock="Bottom" Alignment="Center" Margin="0,5,0,5">
-    <SemiBoldText ux:Name="todayText" Alignment="Center" Value="Bugün" FontSize="14" TextColor="#FFF"/>
+    <SemiBoldText ux:Name="todayText" Alignment="Center" Value="{appLoc.loctxtToday}" FontSize="14" TextColor="#FFF"/>
     <Rectangle CornerRadius="20" Fill="{Resource Red02Color}" Width="80" Height="25"/>
     <Clicked>
       <Callback Handler="{selectToday}" />
