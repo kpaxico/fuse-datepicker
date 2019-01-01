@@ -7,17 +7,20 @@
     <object ux:Property="SelectableMaxDate" />
     <bool ux:Property="CanOnlySelectBusinessDay" />
     <bool ux:Property="HighlightSelectedDate" />
+    <bool ux:Property="CanSelectMonth" />
+    <object ux:Property="SelectedMonth" />
 
     <UserEvent ux:Name="DatePickerDateSelectedEvent" />
+    <UserEvent ux:Name="DatePickerMonthSelectedEvent" />
 
     <OnUserEvent EventName="DatePickerHideCalendarEvent" Handler="{hideCalendar}" />
 
     <JavaScript File="DatePicker.js" />
 
-    <Rectangle Dock="Left" Fill="{Resource Red01Color}" Width="30" Height="30" Margin="5,0,0,0" >
-      <Image Source="backArrowImage" Width="25" Height="25" />
+    <Rectangle Dock="Left" Fill="{Resource Red01Color}" Width="50" Height="30" >
+      <Image Source="backArrowImage" Width="25" Height="25" Alignment="Left" Margin="10,0,0,0" />
       <Clicked>
-        <Callback Handler="{selectPrevDay}" />
+        <Callback Handler="{selectPrevTime}" />
       </Clicked>
     </Rectangle>
     <StackPanel Orientation="Horizontal" ContentAlignment="Center" HitTestMode="LocalBounds">
@@ -26,16 +29,17 @@
 
       <Clicked Handler="{showCalendar}" />
     </StackPanel>
-    <Rectangle Dock="Right" Fill="{Resource Red01Color}" Width="30" Height="30" Margin="0,0,5,0" >
-      <Image Source="forwardArrowImage" Width="25" Height="25" />
+    <Rectangle Dock="Right" Fill="{Resource Red01Color}" Width="50" Height="30" >
+      <Image Source="forwardArrowImage" Width="25" Height="25" Alignment="Right" Margin="0,0,10,0" />
       <Clicked>
-        <Callback Handler="{selectNextDay}" />
+        <Callback Handler="{selectNextTime}" />
       </Clicked>
     </Rectangle>
 
-    <CalendarPanel ux:Name="calendarPanel" SelectedDate="{selectedDate}" SelectableMaxDate="{Property this.SelectableMaxDate}" CanOnlySelectBusinessDay="{Property this.CanOnlySelectBusinessDay}" HighlightSelectedDate="{Property this.HighlightSelectedDate}" LayoutRole="Inert" Layer="Overlay" Visibility="Collapsed" Alignment="HorizontalCenter">
+    <CalendarPanel ux:Name="calendarPanel" SelectedDate="{selectedDate}" SelectableMinDate="{Property this.SelectableMinDate}" SelectableMaxDate="{Property this.SelectableMaxDate}" CanOnlySelectBusinessDay="{Property this.CanOnlySelectBusinessDay}" HighlightSelectedDate="{Property this.HighlightSelectedDate}" CanSelectMonth="{Property this.CanSelectMonth}" SelectedMonth="{Property this.SelectedMonth}" LayoutRole="Inert" Layer="Overlay" Visibility="Collapsed" Alignment="HorizontalCenter">
       <OnUserEvent EventName="CalendarDateSelectedEvent" Handler="{calendarDateSelectedHandler}"/>
       <OnUserEvent EventName="CalendarSelectedDayTappedEvent" Handler="{hideCalendar}"/>
+      <OnUserEvent EventName="CalendarMonthSelectedEvent" Handler="{calendarMonthSelectedHandler}"/>
       <Match Value="{Property this.CalendarPos}">
         <Case String="Bottom">
           <Translation RelativeTo="ParentSize" Y="4.9" />

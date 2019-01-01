@@ -7,17 +7,42 @@
     var Observable = require("FuseJS/Observable");
     var Utils = require('backend/JsUtils.js');
 
-    var selectedDate01 = Observable(new Date(2017,3,10));
-    var selectableMinDate01 = Observable(new Date(2017,3,1));
-    var selectableMaxDate01 = Observable(new Date(2017,3,17));
+    var moment = require('assets/js/moment-bd.js');
+
+    var selectedDate01 = Observable(new Date(2018,9,10));
+    var selectableMinDate01 = Observable(new Date(2018,9,1));
+    var selectableMaxDate01 = Observable(new Date(2018,9,17));
     
     var selectableMaxDate02 = Observable(new Date(2018,11,31));
     
-    var selectedDate05 = Observable(new Date(2017,1,14));
-    var selectableMaxDate05 = Observable(new Date(2017,1,21));
+    //var selectedDate05 = Observable();
+    var selectedDate05 = Observable(new Date(2018,9,14));
+    var selectableMinDate05 = Observable(new Date(2018,9,1));
+    var selectableMaxDate05 = Observable(new Date(2018,9,21));
+    var selectedEndDate05 = selectedDate05.value;
+    var selectedMonth05 = Observable();
+
+    var datePicker05DateSelectedHandler = function(args) {
+      //selectedDate05.value = new Date(args.selectedYear, args.selectedMonth, args.selectedDay);
+      selectedEndDate05 = new Date(args.selectedYear, args.selectedMonth, args.selectedDay);
+
+      debug_log('datePicker05DateSelectedHandler: selectedDate05: {0}, selectedEndDate05: {1}'.format(Utils.formatDate(selectedDate05.value), Utils.formatDate(selectedEndDate05)));
+    }
+
+    var datePicker05MonthSelectedHandler = function(args) {
+      //debugger;
+      var monthBeginDate = new Date(args.selectedYear, args.selectedMonth, args.selectedDay);
+
+      //selectedDate05.value = monthBeginDate;
+      selectedEndDate05 = moment(monthBeginDate).endOf('month').startOf('day').toDate();
+      
+      debug_log('datePicker05MonthSelectedHandler: selectedDate05: {0}, selectedEndDate05: {1}'.format(Utils.formatDate(selectedDate05.value), Utils.formatDate(selectedEndDate05)));
+    }
+
 
     var selectedDate11 = Observable(new Date(2018,10,01));
     var selectableMaxDate11 = Observable(new Date(2018,10,11));
+    var selectedMonth11 = Observable(null);
 
     module.exports = {
       selectedDate01,
@@ -31,15 +56,26 @@
 
       selectedDate05,
       selectedDate05String: selectedDate05.map(function(x) {
-        return Utils.formatDate(x);
+        return Utils.isDate(x) ? Utils.formatDate(x) : '';
       }),
+      selectableMinDate05,
       selectableMaxDate05,
+      selectedMonth05,
+      selectedMonth05String: selectedMonth05.map(function(x) {
+        return Utils.isDate(x) ? Utils.formatDate(x, 'MMMM YYYY') : '';
+      }),
+      datePicker05DateSelectedHandler,
+      datePicker05MonthSelectedHandler,
 
       selectedDate11,
       selectedDate11String: selectedDate11.map(function(x) {
         return Utils.formatDate(x);
       }),
-      selectableMaxDate11
+      selectableMaxDate11,
+      selectedMonth11,
+      selectedMonth11String: selectedMonth11.map(function(x) {
+        return Utils.isDate(x) ? Utils.formatDate(x, 'MMMM YYYY') : '';
+      })
     };
   </JavaScript>
 
@@ -51,8 +87,15 @@
 
         <SelectionEntry Dock="Top" EntryMethod="Calendar" Label="Visit Date" LabelColor="#777" TextColor="#525252" Image="todayImage" ImageColor="{Resource EntryBlueFloat}" EnableClear="true" SelectableMaxDate="{selectableMaxDate02}" CanOnlySelectBusinessDay="true" />
 
-        <DatePicker Dock="Bottom" SelectedDate="{selectedDate05}" SelectableMaxDate="{selectableMaxDate05}" CanOnlySelectBusinessDay="true" CalendarPos="Top" />
-        <Text Dock="Bottom" Value="Selected Date: {selectedDate05String}" Margin="5" />
+        <DatePicker Dock="Bottom" SelectableMinDate="{selectableMinDate05}" SelectedDate="{selectedDate05}" SelectableMaxDate="{selectableMaxDate05}" CanSelectMonth="true" SelectedMonth="{selectedMonth05}" CanOnlySelectBusinessDay="true" CalendarPos="Top">
+          <OnUserEvent EventName="DatePickerDateSelectedEvent" Handler="{datePicker05DateSelectedHandler}" />
+          <OnUserEvent EventName="DatePickerMonthSelectedEvent" Handler="{datePicker05MonthSelectedHandler}" />
+        </DatePicker>
+        <!-- SelectedMonth="{selectedMonth05}"  -->
+        <StackPanel Dock="Bottom">
+          <Text Value="Selected Date: {selectedDate05String}" Margin="5" />
+          <Text Value="Selected Month: {selectedMonth05String}" Margin="5" />
+        </StackPanel>
         <Panel Background="#FFF">
           <Clicked>
             <RaiseUserEvent EventName="DatePickerHideCalendarEvent" />
@@ -60,8 +103,11 @@
         </Panel>
       </BasePage>
       <BasePage Title="Calendar">
-        <Text Dock="Top" Value="Selected Date: {selectedDate11String}" Margin="5" />
-        <CalendarPanel SelectedDate="{selectedDate11}" SelectableMaxDate="{selectableMaxDate11}" />
+        <StackPanel Dock="Top">
+          <Text Value="Selected Date: {selectedDate11String}" Margin="5" />
+          <Text Value="Selected Month: {selectedMonth11String}" Margin="5" />
+        </StackPanel>
+        <CalendarPanel SelectedDate="{selectedDate11}" SelectableMaxDate="{selectableMaxDate11}" CanSelectMonth="true" SelectedMonth="{selectedMonth11}" />
       </BasePage>
     </PageControl>
   </ClientPanel>

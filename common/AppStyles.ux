@@ -25,7 +25,6 @@
 
   <Rectangle ux:Class="HLineRectangle" Fill="#DDD" Height="1" />
 
-
   <Page ux:Class="BasePage" ux:Name="self" HitTestMode="LocalBoundsAndChildren" HeaderColor="0,0,0,0.3" HeaderTextColor="#fff" >
     <float4 ux:Property="HeaderColor" />
     <float4 ux:Property="HeaderTextColor" />
@@ -79,6 +78,8 @@
     <object ux:Property="SelectableMinDate" />
     <object ux:Property="SelectableMaxDate" />
     <bool ux:Property="CanOnlySelectBusinessDay" />
+    <bool ux:Property="CanSelectMonth" />
+    <object ux:Property="SelectedMonth" />
 
     <JavaScript>
       var Observable = require("FuseJS/Observable");
@@ -111,8 +112,12 @@
         }
 
         // debug_log('SelectionEntry, calendarDateSelectedHandler: newDate: {0}, self.SelectedDate.value.value: {1}'.format(Utils.formatDate(newDate), self.SelectedDate.value instanceof Observable ? Utils.formatDate(self.SelectedDate.value.value) : ""));
-     };
-      
+      };
+
+      var calendarMonthSelectedHandler = function(args) {
+        hideCalendar();
+      }
+
       var showHideCalendar = function() {
         isCalendarVisible.value = !isCalendarVisible.value;
       }
@@ -129,6 +134,7 @@
       module.exports = {
         isCalendarVisible,
         calendarDateSelectedHandler,
+        calendarMonthSelectedHandler,
         hideCalendar,
         entryIconClicked
       }
@@ -183,10 +189,10 @@
       <WhileString Value="{Property this.EntryMethod}" Equals="Calendar">
         <OnUserEvent EventName="DatePickerHideCalendarEvent" Handler="{hideCalendar}" />
 
-        <CalendarPanel ux:Name="calendarPanel" SelectedDate="{Property this.SelectedDate}" SelectableMinDate="{Property this.SelectableMinDate}" SelectableMaxDate="{Property this.SelectableMaxDate}" CanOnlySelectBusinessDay="{Property this.CanOnlySelectBusinessDay}" LayoutRole="Inert" Layer="Overlay" 
-            Visibility="Collapsed" Alignment="Right" Margin="0,0,4,0">
+        <CalendarPanel ux:Name="calendarPanel" SelectedDate="{Property this.SelectedDate}" SelectableMinDate="{Property this.SelectableMinDate}" SelectableMaxDate="{Property this.SelectableMaxDate}" CanOnlySelectBusinessDay="{Property this.CanOnlySelectBusinessDay}" CanSelectMonth="{Property this.CanSelectMonth}" SelectedMonth="{Property this.SelectedMonth}" LayoutRole="Inert" Layer="Overlay" Visibility="Collapsed" Alignment="Right" Margin="0,0,4,0">
           <OnUserEvent EventName="CalendarDateSelectedEvent" Handler="{calendarDateSelectedHandler}"/>
           <OnUserEvent EventName="CalendarSelectedDayTappedEvent" Handler="{hideCalendar}"/>
+          <OnUserEvent EventName="CalendarMonthSelectedEvent" Handler="{calendarMonthSelectedHandler}"/>
           <Translation RelativeTo="ParentSize" Y="3.6" />
         </CalendarPanel>
 

@@ -16,11 +16,19 @@ var selectableMinDate = self.SelectableMinDate.inner();
 var selectableMaxDate = self.SelectableMaxDate.inner();
 
 var currentDate = moment(null);
+var currentDateMonthBeg = moment(null);
+var currentDateMonthEnd = moment(null);
 var currentYearMonthLabel = Observable();
 var currentViewDates = [];
 var isSelectedDayInCurrentMonth = Observable(false);
 
 var selectedDay = Observable([]);
+
+var isMonthSelected = Observable(false);
+
+var getSelectedMonth = function() {
+  return self.SelectedMonth.value instanceof Observable ? self.SelectedMonth.value : self.SelectedMonth;
+}
 
 var initDaysView = function() {
   if (currentViewDates.length > 0)
@@ -52,18 +60,15 @@ var refreshDaysView = function() {
   if (!currentDate.isValid())
     return;
 
-  var firstDate = moment([currentDate.year(), currentDate.month(), 1]);
-  var lastDate = moment(currentDate).endOf('month');
-
-  debug_log('refreshDaysView, firstDate: {0}, lastDate: {1}'.format(Utils.formatDate(firstDate), Utils.formatDate(lastDate)));
+  debug_log('CalendarPanel, refreshDaysView, currentDateMonthBeg: {0}, currentDateMonthEnd: {1}'.format(Utils.formatDate(currentDateMonthBeg), Utils.formatDate(currentDateMonthEnd)));
 
   // Previous Month Days Handling
   var firstDayNoOfWeek = moment.localeData().firstDayOfWeek(); // en: 0, tr: 1
-  var prevMonthDayCount = (firstDate.day() === 0 ? 7 : firstDate.day()) - firstDayNoOfWeek;
-  // debug_log('firstDayNoOfWeek: {0}, firstDate.day: {1}, prevMonthDayCount: {2}'.format(firstDayNoOfWeek, firstDate.day(), prevMonthDayCount));
+  var prevMonthDayCount = (currentDateMonthBeg.day() === 0 ? 7 : currentDateMonthBeg.day()) - firstDayNoOfWeek;
+  // debug_log('firstDayNoOfWeek: {0}, currentDateMonthBeg.day: {1}, prevMonthDayCount: {2}'.format(firstDayNoOfWeek, currentDateMonthBeg.day(), prevMonthDayCount));
   var prevMonthDays = [];
   while (prevMonthDayCount > 0) {
-    prevMonthDays.push(firstDate.clone().add((-1) * prevMonthDayCount, 'd').date());
+    prevMonthDays.push(currentDateMonthBeg.clone().add((-1) * prevMonthDayCount, 'd').date());
     --prevMonthDayCount;
   }
   currentViewDates.filter(function(item) {
@@ -77,16 +82,16 @@ var refreshDaysView = function() {
   var currentMonthLastDays = currentViewDates.filter(function(item) {
     return item.state === 0 && item.dayNo >= 28;
   }).forEach(function(element) {
-    element.isInView.value = element.dayNo <= lastDate.date();
-    // debug_log('element.dayNo: {0}, lastDate.date(): {1}, element.isInView.value: {2}'.format(element.dayNo, lastDate.date(), element.isInView.value));
+    element.isInView.value = element.dayNo <= currentDateMonthEnd.date();
+    // debug_log('element.dayNo: {0}, currentDateMonthEnd.date(): {1}, element.isInView.value: {2}'.format(element.dayNo, currentDateMonthEnd.date(), element.isInView.value));
   });
 
   // Next Month Days Handling
-  var nextMonthDayCount = 7 - (lastDate.day() === 0 ? 7 : lastDate.day());
+  var nextMonthDayCount = 7 - (currentDateMonthEnd.day() === 0 ? 7 : currentDateMonthEnd.day());
   var nextMonthDays = [];
   for (var i = 0; i < nextMonthDayCount; i++)
     nextMonthDays.push(i + 1);
-  // debug_log('lastDate.day(): {0}, nextMonthDays: {1}, {2}'.format(lastDate.day(), nextMonthDays, lastDate));
+  // debug_log('currentDateMonthEnd.day(): {0}, nextMonthDays: {1}, {2}'.format(currentDateMonthEnd.day(), nextMonthDays, currentDateMonthEnd));
 
   currentViewDates.filter(function(item) {
     return item.state === 1;
@@ -123,8 +128,11 @@ var canSelectDate = function(givenDate) {
 
 var setCurrentDate = function(dateVal) {
   if (dateVal && dateVal instanceof Date && !moment(dateVal).isSame(currentDate, 'day')) {
-    // debug_log('setCurrentDate, dateVal: {0}, currentDate: {1}, areEqual: {2}'.format(Utils.formatDate(dateVal), Utils.formatDate(currentDate), moment(dateVal).isSame(currentDate, 'day')));
+    debug_log('setCurrentDate, dateVal: {0}, currentDate: {1}, areEqual: {2}'.format(Utils.formatDate(dateVal), Utils.formatDate(currentDate), moment(dateVal).isSame(currentDate, 'day')));
     currentDate = moment(dateVal);
+    currentDateMonthBeg = moment([currentDate.year(), currentDate.month(), 1]);
+    currentDateMonthEnd = moment(currentDate).endOf('month');
+
     currentYearMonthLabel.value = currentDate.format('MMMM YYYY');
     isSelectedDayInCurrentMonth.value = moment(selectedDate.value).isSame(currentDate, 'month');
     refreshDaysView();
@@ -144,10 +152,15 @@ selectableMaxDate.onValueChanged(module, function(dateVal) {
 })
 
 selectedDate.onValueChanged(module, function(dateVal) {
-  // debug_log('selectedDate.onValueChanged: dateVal: {0}'.format(Utils.formatDate(dateVal)));
+  debug_log('CalendarPanel, selectedDate.onValueChanged: dateVal: {0}'.format(Utils.formatDate(dateVal)));
 
   if (!Utils.isDate(dateVal))
     return;
+  // TODO
+  // if (!canSelectDate(dateVal)) {
+  //   setSelectedDate(null);
+  //   return;
+  // }
 
   setCurrentDate(new Date(dateVal.getFullYear(), dateVal.getMonth(), 1));
   isSelectedDayInCurrentMonth.value = moment(selectedDate.value).isSame(currentDate, 'month');
@@ -162,7 +175,7 @@ selectedDay.onValueChanged(module, function() {
   } else {
     var newDate = new Date(currentDate.year(), currentDate.month(), selectedDay.value);
     if (!Utils.isDate(selectedDate.value) || !moment(newDate).isSame(selectedDate.value, 'day')) {
-      // debug_log('selectedDay.onValueChanged: newDate: {0}, selectedDate.value: {1}'.format(Utils.formatDate(newDate), Utils.formatDate(selectedDate.value)));
+      debug_log('CalendarPanel, selectedDay.onValueChanged: newDate: {0}, selectedDate.value: {1}'.format(Utils.formatDate(newDate), Utils.formatDate(selectedDate.value)));
 
       setSelectedDate(newDate, false);
     } 
@@ -171,18 +184,68 @@ selectedDay.onValueChanged(module, function() {
   }
 })
 
-var setSelectedDate = function(newDate, silentUpdate) {
-  debug_log('setSelectedDate: newDate: {0}, silentUpdate: {1}'.format(Utils.formatDate(newDate), silentUpdate));
+function setSelectedDate(newDate, silentUpdate) {
+  debug_log('CalendarPanel, setSelectedDate: newDate: {0}, silentUpdate: {1}'.format(Utils.formatDate(newDate), silentUpdate));
+
+  var selectedMonth = getSelectedMonth();
+
+  if (selectedMonth.value) {
+    debug_log('selectedMonth.value: ' + selectedMonth.value);
+    if (self.SelectedMonth.value instanceof Observable)
+      self.SelectedMonth.value.value = null;
+    else
+      self.SelectedMonth.value = null;
+    
+    isMonthSelected.value = false;
+  }
 
   if (self.SelectedDate.value instanceof Observable)
     self.SelectedDate.value.value = newDate;
   else
     self.SelectedDate.value = newDate;
   
-  CalendarDateSelectedEvent.raise({
-    selectedDay: newDate.getDate(), 
-    selectedMonth: newDate.getMonth(),
-    selectedYear: newDate.getFullYear() 
+  if (Utils.isDate(newDate)) {
+    CalendarDateSelectedEvent.raise({
+      selectedDay: newDate.getDate(), 
+      selectedMonth: newDate.getMonth(),
+      selectedYear: newDate.getFullYear() 
+    });
+  } else
+    CalendarDateSelectedEvent.raise();
+}
+
+self.SelectedMonth.inner().onValueChanged(module, function(dateVal) {
+  var selectedMonth = getSelectedMonth();
+
+  debug_log('CalendarPanel, self.SelectedMonth.onValueChanged: dateVal: {0}, selectedMonth: {1}'.format(Utils.formatDate(dateVal), Utils.formatDate(selectedMonth.value)));
+
+  isMonthSelected.value = Utils.isDate(selectedMonth.value);
+
+  if (!Utils.isDate(dateVal))
+    return;
+
+  setCurrentDate(new Date(selectedMonth.value.getFullYear(), selectedMonth.value.getMonth(), 1));
+});
+
+var currentMonthSelectedHandler = function() {
+  var selectedMonth = getSelectedMonth();
+
+  debug_log('currentMonthSelectedHandler, selectedMonth.value: {0}, currentDateMonthBeg: {1}, currentDateMonthEnd: {2}'.format(selectedMonth.value, Utils.formatDate(currentDateMonthBeg), Utils.formatDate(currentDateMonthEnd)));
+
+  if (selectedMonth.value && (moment(selectedMonth.value).isSame(currentDateMonthBeg)))
+    return;
+
+  var currentDateMonthBegDate = currentDateMonthBeg.toDate();
+  if (self.SelectedMonth.value instanceof Observable)
+    self.SelectedMonth.value.value = currentDateMonthBegDate;
+  else
+    self.SelectedMonth.value = currentDateMonthBegDate;
+  isMonthSelected.value = true;
+
+  CalendarMonthSelectedEvent.raise({
+    selectedDay: currentDateMonthBegDate.getDate(), 
+    selectedMonth: currentDateMonthBegDate.getMonth(),
+    selectedYear: currentDateMonthBegDate.getFullYear() 
   });
 }
 
@@ -202,8 +265,19 @@ var selectToday = function() {
 }
 
 var selectedDayTappedHandler = function(args) {
-  debug_log('selectedDayTappedHandler, args.data.dayNo: {0}, selectedDay.value: {1}, selectedDate.value: {2}, currentDate: {3}'.format(args.data.dayNo, selectedDay.value, Utils.formatDate(selectedDate.value), Utils.formatDate(currentDate)));
+  // debug_log('selectedDayTappedHandler, args.data.dayNo: {0}, selectedDay.value: {1}, selectedDate.value: {2}, currentDate: {3}'.format(args.data.dayNo, selectedDay.value, Utils.formatDate(selectedDate.value), Utils.formatDate(currentDate)));
   if (!Utils.isEmpty(selectedDate.value)) {
+    var selectedMonth = getSelectedMonth();
+
+    if (selectedMonth.value) {
+        if (self.SelectedMonth.value instanceof Observable)
+        self.SelectedMonth.value.value = null;
+      else
+        self.SelectedMonth.value = null;
+      
+      isMonthSelected.value = false;
+    }
+  
     if (moment(selectedDate.value).isSame(currentDate, 'month'))
       CalendarSelectedDayTappedEvent.raise({
         selectedDay: selectedDate.value.getDate(), 
@@ -236,5 +310,8 @@ module.exports = {
 
   selectedDay,
   isSelectedDayInCurrentMonth,
-  highlightSelectedDate: self.HighlightSelectedDate.inner()
+  highlightSelectedDate: self.HighlightSelectedDate.inner(),
+
+  currentMonthSelectedHandler,
+  isMonthSelected
 }

@@ -12,8 +12,8 @@ var isDate = function(v){
   return v && v instanceof Date;
 };
 
-var strToDate = function(dateStr, parseFormatStr, formatStr) {
-  return moment(dateStr, parseFormatStr).format(formatStr || 'DD/MM/YYYY');
+var strToDate = function(dateStr, parseFormatStr) {
+  return moment(dateStr, parseFormatStr || 'YYYY-MM-DDTHH:mm:ss').toDate();
 };
 
 var formatDate = function(dateVal, formatString) {

@@ -4,9 +4,12 @@
   <object ux:Property="SelectableMaxDate" />
   <bool ux:Property="CanOnlySelectBusinessDay" />
   <bool ux:Property="HighlightSelectedDate" />
+  <bool ux:Property="CanSelectMonth" />
+  <object ux:Property="SelectedMonth" />
 
   <UserEvent ux:Name="CalendarDateSelectedEvent" />
   <UserEvent ux:Name="CalendarSelectedDayTappedEvent" />
+  <UserEvent ux:Name="CalendarMonthSelectedEvent" />
 
   <JavaScript File="CalendarPanel.js" />
 
@@ -41,11 +44,13 @@
 
     <WhileTrue Value="{Property this.HighlightSelectedDate}">
       <WhileTrue Value="{isSelectedDayInCurrentMonth}">
-        <WhileSelected>
-          <Change dayText.Color="#FFF"/>
-          <Change dayText.Font="{Resource FontBold}"/>
-          <Change daySelectedCircle.Visibility="Visible"/>
-        </WhileSelected>
+        <WhileTrue Value="{Property this.IsSelectable}">
+          <WhileSelected>
+            <Change dayText.Color="#FFF"/>
+            <Change dayText.Font="{Resource FontBold}"/>
+            <Change daySelectedCircle.Visibility="Visible"/>
+          </WhileSelected>
+        </WhileTrue>
       </WhileTrue>
     </WhileTrue>
     
@@ -73,7 +78,21 @@
         <Scale Target="backImg" Factor="1.1" Duration="0.1" />
       </WhilePressed>
     </Image>
-    <BoldText Column="1" Value="{currentYearMonthLabel}" Alignment="Center" Color="#FFF" />
+    <StackPanel Column="1" Orientation="Vertical" Alignment="Center">
+      <BoldText ux:Name="yearMonthLabel" Value="{currentYearMonthLabel}" Color="#FFF">
+        <WhileTrue Value="{Property this.CanSelectMonth}">
+          <WhilePressed>
+            <Scale Target="yearMonthLabel" Factor="1.2" Duration="0.2" />
+          </WhilePressed>
+          <Clicked Handler="{currentMonthSelectedHandler}" />
+        </WhileTrue>
+      </BoldText>
+      <Rectangle ux:Name="monthSelectedLine" Fill="#FFF" Height="1" Layer="Overlay" Visibility="Hidden" Alignment="Bottom" >
+        <WhileTrue Value="{isMonthSelected}">
+          <Change monthSelectedLine.Visibility="Visible" />
+        </WhileTrue>
+      </Rectangle>
+    </StackPanel>
     <Image Column="2" ux:Name="forwardImg" Source="rightArrowImage" Alignment="Left" Width="30" Height="30" Color="#FFF" Clicked="{goToNextMonth}">
       <WhilePressed>
         <Scale Target="forwardImg" Factor="1.2" Duration="0.2" />
