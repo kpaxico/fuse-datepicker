@@ -1,5 +1,5 @@
 # fuse-datepicker
-Simple, plain DatePicker and Calendar components for [Fuse Open] (https://fuseopen.com/)
+Simple, plain DatePicker and Calendar components for [Fuse Open](https://fuseopen.com/)
 
 ## Screenshots
 
